@@ -3,6 +3,7 @@ from tkinter import *
 from tkinter import messagebox
 from tkinter.ttk import Progressbar
 import shutil
+from shutil import copytree, ignore_patterns
 import sys
 import os
 
@@ -18,15 +19,15 @@ TODAY = datetime.now()
 #     )
 # mainProgressBar.grid(column = 0, row = 8, columnspan = 2, padx = 10, pady = 20)
 
-def initializeUserVariables():  #run this function when interface isn't in use
-    print("Enter call letters:") 
-    callLettersOfPhotog = input()
-    print("Enter destination in external hard drive:")
-    hardDriveRootPath = input()
-    print("Enter user's account name on laptop:")
-    userAcctNameOnDevice = input()
-    photogFolderRootPath = hardDriveRootPath + "\\" + callLettersOfPhotog + " - " + TODAY.strftime('%m-%d-%Y')
-    return(callLettersOfPhotog, hardDriveRootPath, userAcctNameOnDevice, photogFolderRootPath)
+# def initializeUserVariables():  #run this function when interface isn't in use
+#     print("Enter call letters:") 
+#     callLettersOfPhotog = input()
+#     print("Enter destination in external hard drive:")
+#     hardDriveRootPath = input()
+#     print("Enter user's account name on laptop:")
+#     userAcctNameOnDevice = input()
+#     photogFolderRootPath = hardDriveRootPath + "\\" + callLettersOfPhotog + " - " + TODAY.strftime('%m-%d-%Y')
+#     return(callLettersOfPhotog, hardDriveRootPath, userAcctNameOnDevice, photogFolderRootPath)
 
 def createFolders(photogRoot, acctName):
     os.makedirs(photogRoot, exist_ok=True)
@@ -48,8 +49,24 @@ def createFolders(photogRoot, acctName):
     localDocuments, localDownloads, localExports,
     localPictures)
 
-def transferData(src, dest):
-    shutil.copytree(src, dest) 
+def transferData(src, dest, acctName):
+    #shutil.copytree(src, dest)
+
+    to_exclude = ["C:\\Users\\" + acctName + "\\Documents\\My Pictures", 
+                  "C:\\Users\\" + acctName + "\\Documents\\My Videos", 
+                  "C:\\Users\\" + acctName + "\\Documents\\My Music"]
+
+    #ignores excluded directories and .pdf files
+    def get_ignored(path, filenames):
+        ret = []
+        for filename in filenames:
+            if os.path.join(path, filename) in to_exclude:
+                ret.append(filename)
+            elif filename.endswith(".pdf"):
+                ret.append(filename)
+        return ret
+
+    shutil.copytree(src, dest, ignore = get_ignored) 
 
 # def increaseProgress():
 #     mainProgressBar['value'] += 25
@@ -71,15 +88,15 @@ def main(CL, rootPath, userName):
 
     #copying data between folders
     #backing up local desktop folder 
-    transferData(localDesktopFolder, photogDesktopFolder)
+    transferData(localDesktopFolder, photogDesktopFolder, userAcctName)
     #backing up local documents folder 
-    transferData(localDocumentsFolder, photogDocumentsFolder)
+    transferData(localDocumentsFolder, photogDocumentsFolder, userAcctName)
     #backing up local downloads folder
-    transferData(localDownloadsFolder, photogDownloadsFolder)
+    transferData(localDownloadsFolder, photogDownloadsFolder, userAcctName)
     #backing up local exports folder
-    transferData(localExportsFolder, photogExportsFolder)
+    transferData(localExportsFolder, photogExportsFolder, userAcctName)
     #backing up local pictures folder
-    transferData(localPicturesFolder, photogPicturesFolder)
+    transferData(localPicturesFolder, photogPicturesFolder, userAcctName)
 
     #output section
     print("The photographer's laptop has been backed up successfully.")
